@@ -1,9 +1,19 @@
 import { Table, Dropdown } from "flowbite-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 const EmpTableData = ({ empData, handleCheckDelete }) => {
   const navigate = useNavigate();
+  const [displayData, setDisplyData] = useState([])
+
+  const checkData = () => {
+    const filteredData = empData.filter(emp => emp.checkdelete !== 1);
+    setDisplyData(filteredData)
+  }
+
+  useEffect(()=>{
+    checkData();
+  }, [displayData.length])
 
   return (
     <div className="overflow-x-auto mt-6 mx-5">
@@ -23,7 +33,7 @@ const EmpTableData = ({ empData, handleCheckDelete }) => {
         <Table.Body className="divide-y">
           {empData.length > 0 ? (
             empData.map((emp, index) => {
-              if (emp.checkdelete == 1) {
+             // if (emp.checkdelete == 0) {
                 return (
                   <Table.Row
                     key={index}
@@ -56,7 +66,7 @@ const EmpTableData = ({ empData, handleCheckDelete }) => {
                     </Table.Cell>
                   </Table.Row>
                 );
-              }
+             // }
             })
           ) : (
             <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">

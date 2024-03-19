@@ -92,41 +92,42 @@ const EditEmpData = () => {
       formData.append("image", empImage);
     }
 
-      // Put Emp Data
-      try {
-        const response = await editEmpDataWithImage(emp_id.emp_id, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        //console.log("Response:", response);
-      } catch (error) {
-        console.log("Error posting emp data: ", error);
-      }
-    
+    // Put Emp Data
+    try {
+      const response = await editEmpDataWithImage(emp_id.emp_id, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      //console.log("Response:", response);
+    } catch (error) {
+      console.log("Error posting emp data: ", error);
+    }
 
     for (const entry of leaveEntries) {
       //if (!entry.deleted) {
-        const postLeaveData = {
-          leave_id: entry.leave_id,
-          emp_id: emp_id.emp_id,
-          leave_type: entry.leave_type,
-          from_date: entry.from_date,
-          to_date: entry.to_date,
-          days: entry.days,
-          deleted: entry.deleted,
-        };
+      const postLeaveData = {
+        leave_id: entry.leave_id,
+        emp_id: emp_id.emp_id,
+        leave_type: entry.leave_type,
+        from_date: entry.from_date,
+        to_date: entry.to_date,
+        days: entry.days,
+        deleted: entry.deleted,
+      };
 
-        if (entry.leave_id) {
-          //Put Edit Leave Data
-          const leaveResponse = await leaveEditData(postLeaveData.leave_id, postLeaveData);
-          //console.log("Leave Edit Successfully", leaveResponse);
-        } else {
-          // Post leave datas
-          const leaveResponse = await leaveDataPost(postLeaveData);
-          //console.log("Leave Add Successfully", leaveResponse);
-        }
-      
+      if (entry.leave_id) {
+        //Put Edit Leave Data
+        const leaveResponse = await leaveEditData(
+          postLeaveData.leave_id,
+          postLeaveData
+        );
+        //console.log("Leave Edit Successfully", leaveResponse);
+      } else {
+        // Post leave datas
+        const leaveResponse = await leaveDataPost(postLeaveData);
+        //console.log("Leave Add Successfully", leaveResponse);
+      }
     }
 
     setNameError("");
@@ -147,16 +148,17 @@ const EditEmpData = () => {
       const depResponse = await api.get("/dep/depList");
       setDepData(depResponse.data);
 
-      const empImages = await api.get(`/employee/image/${emp_id.emp_id}`, {
-        responseType: "blob",
-      });
-      setEmpImage(empImages.data);
-
       const emp = await searchByEmpId(emp_id.emp_id);
       setEmpData(emp.data);
 
       const leaveList = await api.get("/leave/leaveList");
       setLeaveData(leaveList.data);
+
+      const empImages = await api.get(`/employee/image/${emp_id.emp_id}`, {
+        responseType: "blob",
+      });
+      setEmpImage(empImages.data);
+
     };
 
     fetchData();

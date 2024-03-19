@@ -18,7 +18,7 @@ const ImportExcel = ({fetchEmpData, fetchEmpLeaveData}) => {
 
     try {
       if (file != null) {
-        await axios.post("http://localhost:8080/uploadFile", formData, {
+        await axios.post("http://localhost:8080/employeesystem/empsystem/empLeave/uploadExcel", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },

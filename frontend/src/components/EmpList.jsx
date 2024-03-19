@@ -16,7 +16,7 @@ const EmpList = () => {
   const fileName = "Emp Datas";
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [postPerPage] = useState(12);
+  const [postPerPage] = useState(10);
 
   const [count, setCount] = useState(0);
 
@@ -54,13 +54,14 @@ const EmpList = () => {
           fetchEditData(emp_id, emp);
         }
       });  
+      setCount(count + 1);
     }
   };
 
   useEffect(() => {
     FetchEmpData();
     FetchEmpLeaveData();
-  }, [count]);
+  }, []);
 
   return (
     <div className="">
