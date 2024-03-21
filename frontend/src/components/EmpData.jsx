@@ -6,7 +6,6 @@ import {
   Textarea,
   Button,
   Table,
-  Checkbox,
 } from "flowbite-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/ApiResources";

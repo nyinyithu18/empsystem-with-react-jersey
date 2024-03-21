@@ -1,24 +1,38 @@
 import { Table, Dropdown } from "flowbite-react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router";
+import { editEmployeeData } from "../service/EmpService";
 
-const EmpTableData = ({ empData, handleCheckDelete }) => {
+const EmpTableData = ({ empData }) => {
   const navigate = useNavigate();
-  const [displayData, setDisplyData] = useState([])
 
-  const checkData = () => {
-    const filteredData = empData.filter(emp => emp.checkdelete !== 1);
-    setDisplyData(filteredData)
-  }
+  const fetchEditData = async (emp_id, emp) => {
+    await editEmployeeData(emp_id, emp);
+    window.location.reload();
+  };
 
-  useEffect(()=>{
-    checkData();
-  }, [displayData.length])
+  // Check delete Employee Data for soft delete
+  const handleCheckDelete = (emp_id) => {
+    if (window.confirm("Are you sure?")) {
+      const editempdata = empData.map((emp) => {
+        if (emp.emp_id == emp_id) {
+          return { ...emp, checkdelete: 0 };
+        }
+        return emp;
+      });
+
+      editempdata.map((emp) => {
+        if (emp.emp_id == emp_id) {
+          fetchEditData(emp_id, emp);
+        }
+      });
+    }
+  };
 
   return (
     <div className="overflow-x-auto mt-6 mx-5">
-      <Table hoverable>
-        <Table.Head>
+      <Table hoverable striped>
+        <Table.Head className="bg-slate-500">
           <Table.HeadCell>ID</Table.HeadCell>
           <Table.HeadCell>Name</Table.HeadCell>
           <Table.HeadCell>NRC</Table.HeadCell>
@@ -37,7 +51,7 @@ const EmpTableData = ({ empData, handleCheckDelete }) => {
                 return (
                   <Table.Row
                     key={index}
-                    className="bg-white dark:border-gray-700 dark:bg-gray-800"
+                    className=""
                   >                   
                     <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                       {emp.emp_id}

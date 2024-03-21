@@ -1,9 +1,8 @@
-import { Button, Label, TextInput } from "flowbite-react";
+import { Button, Label, Select, TextInput } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/ApiResources";
 import ExcelExport from "./ExcelExport";
-import { editEmployeeData } from "../service/EmpService";
 import EmpTableData from "./EmpTableData";
 import EmpTablePagination from "./EmpTablePagination";
 import ImportExcel from "./ImportExcel";
@@ -15,11 +14,9 @@ const EmpList = () => {
 
   const fileName = "Emp Datas";
 
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [postPerPage] = useState(10);
-
-  const [count, setCount] = useState(0);
-
+  const [postPerPage, setPostPerPage] = useState(5);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Fetch Emp Data
@@ -33,29 +30,6 @@ const EmpList = () => {
   const FetchEmpLeaveData = async () => {
     const res = await api.get("/empLeave/empLeaveList");
     setEmpLeaveData(res.data);
-  };
-
-  const fetchEditData = async (emp_id, emp) => {
-    await editEmployeeData(emp_id, emp);
-  };
-
-  // Check delete Employee Data
-  const handleCheckDelete = (emp_id) => {
-    if (window.confirm("Are you sure?")) {
-      const editempdata = empData.map((emp) => {
-        if (emp.emp_id == emp_id) {
-          return { ...emp, checkdelete: 0 };
-        }
-        return emp;
-      });
-
-      editempdata.map((emp) => {
-        if (emp.emp_id == emp_id) {
-          fetchEditData(emp_id, emp);
-        }
-      });  
-      setCount(count + 1);
-    }
   };
 
   useEffect(() => {
@@ -111,13 +85,24 @@ const EmpList = () => {
           (currentPage - 1) * postPerPage,
           currentPage * postPerPage
         )}
-        handleCheckDelete={handleCheckDelete}
       />
-      <EmpTablePagination
-        postPerPage={postPerPage}
-        totalPost={empData.length}
-        paginate={paginate}
-      />
+      <div className="flex justify-between my-4">
+        <div className="w-20 ms-7">
+          <Select value={postPerPage} onChange={(e) => setPostPerPage(e.target.value)} required>
+          <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </Select>
+        </div>
+        <EmpTablePagination
+          postPerPage={postPerPage}
+          totalPost={empData.length}
+          paginate={paginate}
+        />
+        <div></div>
+      </div>
     </div>
   );
 };

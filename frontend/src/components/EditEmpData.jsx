@@ -1,6 +1,5 @@
 import {
   Button,
-  Checkbox,
   Label,
   Select,
   Table,
@@ -13,7 +12,6 @@ import { editEmpDataWithImage, searchByEmpId } from "../service/EmpService";
 import { Link } from "react-router-dom";
 import { api } from "../api/ApiResources";
 import { leaveDataPost, leaveEditData } from "../service/LeaveService";
-import axios from "axios";
 
 const EditEmpData = () => {
   const [empData, setEmpData] = useState({
@@ -158,7 +156,6 @@ const EditEmpData = () => {
         responseType: "blob",
       });
       setEmpImage(empImages.data);
-
     };
 
     fetchData();
@@ -171,25 +168,6 @@ const EditEmpData = () => {
     );
     setLeaveEntries(relevantLeaveEntries);
   }, [leaveData, emp_id]);
-
-  /*
-  // Handle Print
-  const handlePrint = async () => {
-    try {
-      const response = await api.get(`/pdfExport/${emp_id.emp_id}`, {
-        responseType: "blob",
-      });
-
-      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
-
-      const pdfUrl = window.URL.createObjectURL(pdfBlob);
-
-      window.open(pdfUrl);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-    }
-  };
-*/
 
   // Add Leave Form
   const handleAddEntry = () => {
@@ -291,7 +269,7 @@ const EditEmpData = () => {
               <div onClick={handleImageClick} className="cursor-pointer w-56">
                 {empImage || image ? (
                   <img
-                    className="rounded-full w-56 h-56 object-cover"
+                    className={`rounded-full w-56 h-56 object-cover`}
                     src={
                       image
                         ? URL.createObjectURL(image)

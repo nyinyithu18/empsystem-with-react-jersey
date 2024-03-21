@@ -223,7 +223,13 @@ public class EmployeeServices {
 
 		File imageFile = new File(filePath + "profileImage_" + emp_id + ".jpg");
 		if (!imageFile.exists() || !imageFile.isFile()) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+
+			File defaultImage = new File(filePath + "defaultImage" + ".jpg");
+
+			FileInputStream fileInputStream = new FileInputStream(defaultImage);
+			long contentLength = defaultImage.length();
+
+			return Response.ok(fileInputStream).header("Content-Length", String.valueOf(contentLength)).build();
 		}
 		FileInputStream fileInputStream = new FileInputStream(imageFile);
 		long contentLength = imageFile.length();
