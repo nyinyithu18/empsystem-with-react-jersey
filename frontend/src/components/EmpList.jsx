@@ -2,7 +2,6 @@ import { Button, Label, Select, TextInput } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/ApiResources";
-import ExcelExport from "./ExcelExport";
 import EmpTableData from "./EmpTableData";
 import EmpTablePagination from "./EmpTablePagination";
 import ImportExcel from "./ImportExcel";
@@ -10,13 +9,9 @@ import ImportExcel from "./ImportExcel";
 const EmpList = () => {
   const [empData, setEmpData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [empLeaveData, setEmpLeaveData] = useState([]);
-
-  const fileName = "Emp Datas";
-
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [postPerPage, setPostPerPage] = useState(5);
+  const [postPerPage, setPostPerPage] = useState(10);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Fetch Emp Data
@@ -26,15 +21,37 @@ const EmpList = () => {
     setFilteredData(res.data);
   };
 
-  // Fetch Emp and Leave Data
-  const FetchEmpLeaveData = async () => {
-    const res = await api.get("/empLeave/empLeaveList");
-    setEmpLeaveData(res.data);
+  // Export With excel file
+  const exportExcel = async () => {
+    try {
+      const res = await api.get("/empLeave/export",{
+        responseType: 'blob',
+      });
+  
+      if (res.status >= 200 && res.status < 300) {
+        const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "employee_data.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }else {
+        console.error("Failed to export data: ", res.statusText)
+      }
+    } catch (error) {
+      console.error("Error exporting data: ", error);
+    }
+
   };
+
+  const handleExport = () => {
+    exportExcel();
+  }
 
   useEffect(() => {
     FetchEmpData();
-    FetchEmpLeaveData();
   }, []);
 
   return (
@@ -67,11 +84,10 @@ const EmpList = () => {
           <div className="flex">
             <ImportExcel
               fetchEmpData={FetchEmpData}
-              fetchEmpLeaveData={FetchEmpLeaveData}
             />
           </div>
           <div>
-            <ExcelExport excelData={empLeaveData} fileName={fileName} />
+            <Button onClick={handleExport} className="bg-blue-500" type="button">Export</Button>
           </div>
           <div>
             <Link to="/">

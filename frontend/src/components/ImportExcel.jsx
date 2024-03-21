@@ -3,7 +3,7 @@ import { Button, Modal } from "flowbite-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-const ImportExcel = ({fetchEmpData, fetchEmpLeaveData}) => {
+const ImportExcel = ({fetchEmpData}) => {
   const [file, setFile] = useState(null);
   const [openModal, setOpenModal] = useState(false);
 
@@ -25,7 +25,6 @@ const ImportExcel = ({fetchEmpData, fetchEmpLeaveData}) => {
         });
         setOpenModal(false);
         fetchEmpData();
-        fetchEmpLeaveData();
       }
     } catch (error) {
       console.error("Error uploading file:", error);

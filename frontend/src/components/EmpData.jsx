@@ -10,12 +10,12 @@ import {
 import { Link } from "react-router-dom";
 import { api } from "../api/ApiResources";
 import { leaveDataPost } from "../service/LeaveService";
-import axios from "axios";
 
 const EmpData = () => {
   // For Rank , Department and EmpInterests Fetch
   const [rankData, setRankData] = useState([]);
   const [depData, setDepData] = useState([]);
+  const [empData, setEmpData] = useState([]);
 
   // For Employee Data Form
   const [empId, setEmpId] = useState("");
@@ -39,6 +39,8 @@ const EmpData = () => {
   const [emailError, setEmailError] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
+  const [empIdAvailable, setEmpIdAvailable] = useState(false);
+
   // For Leave Form
   const [leaveEntries, setLeaveEntries] = useState([]);
 
@@ -48,8 +50,17 @@ const EmpData = () => {
     setEmpId(value);
     if (!value.trim()) {
       setEmpIDError("EmpId is required");
+      setEmpIdAvailable(false);
     } else {
-      setEmpIDError(""); // Clear error if validation passes
+      const isExistingEmpId = empData.some((emp) => emp.emp_id == value);
+
+      if (isExistingEmpId) {
+        setEmpIDError("Emp Id already exists!");
+        setEmpIdAvailable(false);
+      } else {
+        setEmpIDError("Emp Id is available.");
+        setEmpIdAvailable(true);
+      }
     }
   };
 
@@ -101,7 +112,7 @@ const EmpData = () => {
     if (!value.trim()) {
       setPhoneError("Phone number is required");
     } else if (!/^(\+?95[\-\s]?)?((?!0)[0-9]{1,9})$/.test(value)) {
-      setPhoneError("Invalid phone number");
+      setPhoneError("Invalid phone number(95_ _ _ _ _ _ _)");
     } else {
       setPhoneError(""); // Clear error if validation passes
     }
@@ -109,7 +120,6 @@ const EmpData = () => {
 
   // Emp Data and Leave Data Post
   const EmpDataPost = async () => {
-    
     if (!empId || !empName || !nrc || !phone || !email) {
       // If any required field is empty, set error messages
       setEmpIDError(!empId ? "EmpId is required" : "");
@@ -136,20 +146,16 @@ const EmpData = () => {
 
       try {
         // post emp data
-        const response = await axios.post(
-          "http://localhost:8080/employeesystem/empsystem/employee/addEmp",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const response = await api.post("/employee/addEmp", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         //console.log("Response:", response);
         alert("Employee Data saved successfully");
       } catch (error) {
         console.log("Error posting emp data: ", error);
-    }
+      }
 
       for (const entry of leaveEntries) {
         const postLeaveData = {
@@ -188,6 +194,9 @@ const EmpData = () => {
 
       const depResponse = await api.get("/dep/depList");
       setDepData(depResponse.data);
+
+      const empResponse = await api.get("/employee/empList");
+      setEmpData(empResponse.data);
     };
     fetchData();
   }, []);
@@ -312,7 +321,9 @@ const EmpData = () => {
                 sizing="md"
                 className="w-96"
               />
-              {empIdError && <div className="text-red-500">{empIdError}</div>}
+              <div className={empIdAvailable ? "text-green-500" : "text-red-500"}>
+                {empIdError}
+              </div>
             </div>
             <div>
               <div className="mb-2 block">
@@ -356,7 +367,7 @@ const EmpData = () => {
                 id="phone"
                 value={phone}
                 onChange={handlePhoneChange}
-                type="text"
+                type="number"
                 sizing="md"
                 className="w-96"
               />
@@ -456,7 +467,7 @@ const EmpData = () => {
                 required
                 rows={2}
               />
-            </div>           
+            </div>
           </div>
         </div>
       </div>
