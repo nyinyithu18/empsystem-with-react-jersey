@@ -45,7 +45,7 @@ const EmpTableData = ({ empData }) => {
           <Table.HeadCell>Action</Table.HeadCell>
         </Table.Head>
         <Table.Body className="divide-y">
-          {empData.length > 0 ? (
+          {empData.length > 0 && empData != null? (
             empData.map((emp, index) => {
              // if (emp.checkdelete == 0) {
                 return (

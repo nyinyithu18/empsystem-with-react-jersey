@@ -1,22 +1,31 @@
 import React from "react";
 
-const EmpTablePagination = ({ postPerPage, totalPost, paginate }) => {
-  const pageNumbers = Math.ceil(totalPost / postPerPage);
+const EmpTablePagination = ({ postPerPage, totalCount, currentPage, handlePageChange }) => {
+  const totalPages = Math.ceil(totalCount / postPerPage);
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    for (let i = 1; i <= totalPages; i++) {
+      buttons.push(
+        <li key={i} className="m-1">
+          <button
+            className={`px-3 py-2 bg-slate-200 hover:bg-slate-500 hover:text-white hover:rounded ${
+              currentPage === i ? "bg-slate-500 text-white" : ""
+            }`}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </button>
+        </li>
+      );
+    }
+    return buttons;
+  };
 
   return (
-    <nav className="">
+    <nav className="mt-4">
       <ul className="flex justify-row justify-center">
-        {Array.from({ length: pageNumbers }).map((_, index) => (
-          <li key={index} className="m-1">
-            <a
-              href="#"
-              className="px-3 py-2 bg-slate-200 hover:bg-slate-500 hover:text-white hover:rounded"
-              onClick={() => paginate(index + 1)}
-            >
-              {index + 1}
-            </a>
-          </li>
-        ))}
+        {renderPaginationButtons()}
       </ul>
     </nav>
   );

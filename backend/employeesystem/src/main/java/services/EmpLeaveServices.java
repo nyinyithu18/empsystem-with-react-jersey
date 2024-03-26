@@ -7,6 +7,9 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 
@@ -16,15 +19,32 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import dto.EmployeeRequest;
+import dto.EmployeeResponse;
 import dto.LeaveRequest;
 import util.ConnectionDatasource;
 
 public class EmpLeaveServices {
 
-	public static Response exportToExcel() {
+	public static Response exportToExcel(String searchValue) {
 		try (Connection connection = ConnectionDatasource.getConnection();
 				PreparedStatement statement = connection.prepareStatement(
-						"select employee.emp_id, employee.emp_name, employee.nrc, employee.phone, employee.email, employee.dob, employee.rank, employee.dep, employee.address, employee.checkdelete, empleave.leave_id, empleave.leave_type, empleave.from_date, empleave.to_date, empleave.days, empleave.deleted from employee full outer join empleave on employee.emp_id = empleave.emp_id;")) {
+						"SELECT e.emp_id, e.emp_name, e.nrc, e.phone, " + "e.email, e.dob, e.rank, e.dep, e.address, "
+								+ "e.checkdelete, el.leave_id, el.leave_type, "
+								+ "el.from_date, el.to_date, el.days, el.deleted " + "FROM employee e "
+								+ "FULL OUTER JOIN empleave el ON e.emp_id = el.emp_id "
+								+ (searchValue != null && !searchValue.isEmpty()
+										? "WHERE e.checkdelete = 1 AND (e.emp_id LIKE ? OR e.emp_name LIKE ? OR "
+												+ "e.nrc LIKE ? OR e.phone LIKE ? OR "
+												+ "e.email LIKE ? OR e.rank LIKE ? OR "
+												+ "e.dep LIKE ? OR e.address LIKE ?)"
+										: ""))) {
+
+			if (searchValue != null && !searchValue.isEmpty()) {
+				for (int i = 1; i <= 8; i++) {
+					statement.setString(i, "%" + searchValue + "%");
+				}
+			}
+
 			ResultSet result = statement.executeQuery();
 			Workbook workbook = new XSSFWorkbook();
 			Sheet sheet = workbook.createSheet("Emp Data");
@@ -68,7 +88,7 @@ public class EmpLeaveServices {
 				empRow.createCell(15).setCellValue(result.getInt("deleted"));
 			}
 
-			File excelFile = File.createTempFile("employee-data", ".xlsx");
+			File excelFile = File.createTempFile("employee_data", ".xlsx");
 			try (FileOutputStream outputStream = new FileOutputStream(excelFile)) {
 				workbook.write(outputStream);
 			}
@@ -127,4 +147,115 @@ public class EmpLeaveServices {
 
 	}
 
+	public static List<EmployeeResponse> findWithPager(int startIndex, int limit, String searchValue) {
+
+		try (Connection connection = ConnectionDatasource.getConnection();
+				PreparedStatement statement = buildSearchStatement(connection, startIndex, limit, searchValue)) {
+
+			ResultSet result = statement.executeQuery();
+			List<EmployeeResponse> list = new ArrayList<EmployeeResponse>();
+			while (result.next()) {
+				EmployeeResponse response = new EmployeeResponse();
+				response.setEmp_id(result.getInt("emp_id"));
+				response.setEmp_name(result.getString("emp_name"));
+				response.setNrc(result.getString("nrc"));
+				response.setPhone(result.getString("phone"));
+				response.setEmail(result.getString("email"));
+				response.setDob(result.getString("dob"));
+				response.setRank(result.getString("rank"));
+				response.setDep(result.getString("dep"));
+				response.setAddress(result.getString("address"));
+				response.setCheckdelete(result.getInt("checkdelete"));
+				list.add(response);
+			}
+
+			int totalCount = EmpLeaveServices.getTotalEmpCount(searchValue);
+			int totalPages = EmpLeaveServices.calculateTotalPages(totalCount, limit);
+
+			// System.out.println("TotalCount : " + totalCount);
+			// System.out.println("TotalPages : " + totalPages);
+
+			return list;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public static PreparedStatement buildSearchStatement(Connection connection, int startIndex, int limit,
+			String searchValue) throws SQLException {
+		String baseQuery = "SELECT * FROM employee";
+		String searchCondition = "";
+
+		if (searchValue != null && !searchValue.isEmpty()) {
+			searchCondition = " WHERE checkdelete = 1 AND (emp_id LIKE ? OR emp_name LIKE ? OR nrc LIKE ? OR phone LIKE ? OR email LIKE ? OR rank LIKE ? OR dep LIKE ? OR address LIKE ?)";
+		}
+
+		String finalQuery = baseQuery + searchCondition + " ORDER BY emp_id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+
+		PreparedStatement statement = connection.prepareStatement(finalQuery);
+		int paramIndex = 1;
+
+		if (searchValue != null && !searchValue.isEmpty()) {
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+		}
+
+		statement.setInt(paramIndex++, startIndex);
+		statement.setInt(paramIndex++, limit);
+
+		return statement;
+	}
+
+	public static int getTotalEmpCount(String searchValue) {
+		try (Connection connection = ConnectionDatasource.getConnection();
+				PreparedStatement statement = buildCountStatement(connection, searchValue);) {
+			ResultSet result = statement.executeQuery();
+			if (result.next()) {
+				return result.getInt(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return 0;
+	}
+
+	private static PreparedStatement buildCountStatement(Connection connection, String searchValue)
+			throws SQLException {
+		String baseQuery = "SELECT COUNT(*) FROM employee";
+		String searchCondition = "";
+
+		if (searchValue != null && !searchValue.isEmpty()) {
+			searchCondition = " WHERE checkdelete = 1 AND (emp_id LIKE ? OR emp_name LIKE ? OR nrc LIKE ? OR phone LIKE ? OR email LIKE ? OR rank LIKE ? OR dep LIKE ? OR address LIKE ?)";
+		}
+
+		String finalQuery = baseQuery + searchCondition;
+
+		PreparedStatement statement = connection.prepareStatement(finalQuery);
+		int paramIndex = 1;
+
+		if (searchValue != null && !searchValue.isEmpty()) {
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+			statement.setString(paramIndex++, "%" + searchValue + "%");
+		}
+		return statement;
+	}
+
+	public static int calculateTotalPages(int totalEmp, int empPerpage) {
+		return (int) Math.ceil((double) totalEmp / empPerpage);
+	}
 }
